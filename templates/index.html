@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Codebase AI Assistant</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <header>
+        <h1>Codebase AI Assistant</h1>
+        <p>RAG 기반 Python 코드 분석 AI Assistant</p>
+    </header>
+
+
+    <main>
+
+        <!-- Repository Indexing -->
+
+        <section>
+
+            <h2>Repository Indexing</h2>
+
+            <p>
+                분석할 Python 프로젝트의 경로를 입력하세요.
+            </p>
+
+            <input
+                id="repo-path"
+                type="text"
+                placeholder="C:\Users\...\project"
+            >
+
+            <button
+                id="index-button"
+                onclick="indexRepository()"
+            >
+                Repository Index
+            </button>
+
+            <div
+                id="index-status"
+                class="status-box"
+            >
+                Repository를 인덱싱하면
+                검색 가능한 코드 데이터베이스가 생성됩니다.
+            </div>
+
+        </section>
+
+
+        <!-- Question -->
+
+        <section>
+
+            <h2>Ask Question</h2>
+
+            <textarea
+                id="question"
+                placeholder="프로젝트 코드에 대해 질문하세요."
+                rows="4"
+            ></textarea>
+
+            <button
+                id="ask-button"
+                onclick="askQuestion()"
+            >
+                질문하기
+            </button>
+
+        </section>
+
+
+        <!-- Answer -->
+
+        <section>
+
+            <h2>AI Answer</h2>
+
+            <div
+                id="answer"
+                class="answer-box"
+            >
+                질문을 입력하고 질문하기 버튼을 눌러주세요.
+            </div>
+
+        </section>
+
+
+        <!-- Sources -->
+
+        <section>
+
+            <h2>Sources</h2>
+
+            <ul id="sources">
+
+                <li>
+                    검색된 코드 파일이 여기에 표시됩니다.
+                </li>
+
+            </ul>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script>
+
+
+async function indexRepository() {
+
+    const repoPath =
+        document.getElementById("repo-path").value.trim();
+
+    const button =
+        document.getElementById("index-button");
+
+    const status =
+        document.getElementById("index-status");
+
+
+    if (!repoPath) {
+
+        alert("Repository 경로를 입력해주세요.");
+
+        return;
+    }
+
+
+    button.disabled = true;
+
+    button.textContent = "Indexing...";
+
+    status.textContent =
+        "Repository를 분석하고 있습니다.\n잠시 기다려주세요.";
+
+
+    try {
+
+        const response = await fetch(
+            "/api/index",
+            {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    repo_path: repoPath
+                })
+
+            }
+        );
+
+
+        const data = await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.detail ||
+                "Repository indexing에 실패했습니다."
+            );
+
+        }
+
+
+        status.textContent =
+            `Indexing 완료\n\n` +
+            `Repository: ${data.repo_path}\n` +
+            `Python 파일: ${data.file_count}개\n` +
+            `Code Chunk: ${data.chunk_count}개`;
+
+    }
+
+
+    catch (error) {
+
+        status.textContent =
+            `오류가 발생했습니다.\n${error.message}`;
+
+    }
+
+
+    finally {
+
+        button.disabled = false;
+
+        button.textContent = "Repository Index";
+
+    }
+
+}
+
+
+
+async function askQuestion() {
+
+    const questionInput =
+        document.getElementById("question");
+
+    const answerBox =
+        document.getElementById("answer");
+
+    const sourcesList =
+        document.getElementById("sources");
+
+    const button =
+        document.getElementById("ask-button");
+
+
+    const question =
+        questionInput.value.trim();
+
+
+    if (!question) {
+
+        alert("질문을 입력해주세요.");
+
+        return;
+
+    }
+
+
+    button.disabled = true;
+
+    button.textContent = "분석 중...";
+
+
+    answerBox.textContent =
+        "AI가 프로젝트 코드를 분석하고 있습니다.";
+
+
+    sourcesList.innerHTML = "";
+
+
+    try {
+
+        const response = await fetch(
+            "/api/ask",
+            {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    question: question
+                })
+
+            }
+        );
+
+
+        const data = await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.detail ||
+                "질문 처리 중 오류가 발생했습니다."
+            );
+
+        }
+
+
+        answerBox.textContent =
+            data.answer;
+
+
+        if (
+            data.sources &&
+            data.sources.length > 0
+        ) {
+
+            data.sources.forEach(source => {
+
+                const li =
+                    document.createElement("li");
+
+                li.textContent = source;
+
+                sourcesList.appendChild(li);
+
+            });
+
+        }
+
+
+        else {
+
+            const li =
+                document.createElement("li");
+
+            li.textContent =
+                "검색된 소스가 없습니다.";
+
+            sourcesList.appendChild(li);
+
+        }
+
+    }
+
+
+    catch (error) {
+
+        answerBox.textContent =
+            `오류가 발생했습니다.\n${error.message}`;
+
+    }
+
+
+    finally {
+
+        button.disabled = false;
+
+        button.textContent = "질문하기";
+
+    }
+
+}
+
+
+</script>
+
+</body>
+
+</html>

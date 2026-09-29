@@ -1,0 +1,32 @@
+@"
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+
+# Test cache
+.pytest_cache/
+
+# Environment
+.env
+
+# ChromaDB
+database/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+"@ | Set-Content .gitignore
+test_database/
+
+Add-Content .gitignore "`ntest_database/"
