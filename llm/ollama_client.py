@@ -48,13 +48,11 @@ class OllamaClient:
         response = requests.post(
 
             self.url,
-
             json={
                 "model": self.model,
                 "prompt": prompt,
                 "stream": False
             },
-
             timeout=300
 
         )

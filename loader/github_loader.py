@@ -7,8 +7,6 @@ IGNORE_DIRS = {
     "venv",
     ".venv",
     "__pycache__",
-    ".git",
-    ".idea",
     ".vscode",
     "node_modules"
 }

@@ -8,7 +8,6 @@ class ChromaManager:
             path="./database"
         )
 
-
     def load(self):
         self.collection = self.client.get_or_create_collection(
             name="code_chunks"
